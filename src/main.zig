@@ -6,7 +6,7 @@ const allocator = std.heap.page_allocator;
 pub fn main() !void {
     var buf: [27]u8 = undefined;
     const available = try askInput("Which letters are still available? ", &buf) orelse unreachable;
-    var options: [5]usize = .{available.len} ** 5;
+    var options: [5]usize = .{available.len + 1} ** 5;
 
     var known: [5]u8 = undefined;
     for (0..5) |i| {
