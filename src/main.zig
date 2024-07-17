@@ -40,16 +40,16 @@ pub fn main() !void {
         if (banned[0].len > 0 and contains(banned[0], first)) continue;
         word[0] = if (known[0] == ' ') first else known[0];
         for (available) |second| {
-            if (banned[1].len > 1 and contains(banned[1], second)) continue;
+            if (banned[1].len > 0 and contains(banned[1], second)) continue;
             word[1] = if (known[1] == ' ') second else known[1];
             for (available) |third| {
-                if (banned[2].len > 2 and contains(banned[2], third)) continue;
+                if (banned[2].len > 0 and contains(banned[2], third)) continue;
                 word[2] = if (known[2] == ' ') third else known[2];
                 for (available) |fourth| {
-                    if (banned[3].len > 3 and contains(banned[3], fourth)) continue;
+                    if (banned[3].len > 0 and contains(banned[3], fourth)) continue;
                     word[3] = if (known[3] == ' ') fourth else known[3];
                     for (available) |fifth| {
-                        if (banned[4].len > 4 and contains(banned[4], fifth)) continue;
+                        if (banned[4].len > 0 and contains(banned[4], fifth)) continue;
                         word[4] = if (known[4] == ' ') fifth else known[4];
                         var legal = true;
                         for (forced) |l| {
