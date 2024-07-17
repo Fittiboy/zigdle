@@ -32,8 +32,9 @@ pub fn main() !void {
         total *= single;
     }
 
-    var words = try allocator.alloc([5]u8, total);
+    var words = try allocator.alloc(?[5]u8, total);
     var next_word: usize = 0;
+    words[next_word] = null;
     for (available) |first| {
         var word: [5]u8 = undefined;
         if (banned[0].len > 0 and contains(banned[0], first)) continue;
@@ -57,6 +58,9 @@ pub fn main() !void {
                         if (legal and !contains_word(words, &word)) {
                             words[next_word] = word;
                             next_word += 1;
+                            if (words.len > next_word) {
+                                words[next_word] = null;
+                            }
                         }
                     }
                 }
@@ -65,8 +69,7 @@ pub fn main() !void {
     }
 
     for (words) |word| {
-        if (word[0] == undefined) continue;
-        print("{s}\n", .{word});
+        if (word) |w| print("{s}\n", .{w}) else break;
     }
 }
 
@@ -89,9 +92,9 @@ fn contains(word: []const u8, letter: u8) bool {
     return false;
 }
 
-fn contains_word(words: [][5]u8, word: []const u8) bool {
-    for (words) |*w| {
-        if (std.mem.eql(u8, word, w)) return true;
+fn contains_word(words: []?[5]u8, word: []const u8) bool {
+    for (words) |maybe_word| {
+        if (maybe_word) |*w| if (std.mem.eql(u8, word, w)) return true;
     }
     return false;
 }
