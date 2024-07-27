@@ -179,8 +179,17 @@ pub fn main() !void {
     var buf: [26 * 7]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(&buf);
     const allocator = fba.allocator();
-    var words = try Words.init(allocator);
+    var words = Words.init(allocator) catch {
+        print("You typed too much there!\n", .{});
+        const stderr = std.io.getStdErr().writer();
+        try stdin.streamUntilDelimiter(stderr, '\n', null);
+        print("\n", .{});
+        return;
+    };
     defer words.deinit();
 
-    while (try words.next()) |word| print("{s}\n", .{word});
+    while (words.next() catch {
+        print("No words match these rules! Did you type everything correctly?\n", .{});
+        return;
+    }) |word| print("{s}\n", .{word});
 }
