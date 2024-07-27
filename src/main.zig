@@ -54,12 +54,12 @@ const Words = struct {
             const buf_writer = buf_stream.writer();
             print("Which letters are banned in position {d}? ", .{i + 1});
             try stdin.streamUntilDelimiter(buf_writer, '\n', 27);
-            banned[i] = buf[0..try buf_stream.getPos()];
+            banned[i] = buf[0..buf_stream.pos];
         }
 
         return .{
             .arena = arena,
-            .available = available[0..try avail_stream.getPos()],
+            .available = available[0..avail_stream.pos],
             .known = known,
             .banned = banned,
         };
