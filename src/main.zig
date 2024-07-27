@@ -3,6 +3,92 @@ const stdin = std.io.getStdIn().reader();
 const print = std.debug.print;
 const allocator = std.heap.page_allocator;
 
+const Words = struct {
+    const Self = @This();
+    arena: std.heap.ArenaAllocator,
+    // The game of Wordle tells us which of the letters we guessed are not part
+    // of the word at all, so we can make sure not to waste time searching for
+    // words containing these.
+    available: []const u8,
+    // When we guess a letter in the correct position, Wordle lets us know this
+    // as well by displaying it as green. No need to search for any words that
+    // don't have these letters in their known positions.
+    known: [5]?u8,
+    // When we guess a letter that is in the word, but not in the position we
+    // guessed it to be in, Wordle displays it as yellow. We can ignore all
+    // words that have these letters in their incorrect positions as well.
+    banned: [5][]const u8,
+    // Using `known` and `banned`, we can infer which letters are guaranteed to
+    // be in the word, so we can ignore all words that don't contain each of
+    // them. In some cases, the player can know that a letter exists in the
+    // word more than once. For simplicity, we ignore this case.
+    forced: ?[]const u8,
+    // By keeping track of how many of the letters we have tried for each
+    // position, we know when to try the next letter (when the next position
+    // has been exhausted) as well when to stop (when the first position has
+    // been exhausted).
+    tried: [5]u5,
+
+    pub fn init(alloc: std.mem.Allocator) !Self {
+        var arena = std.heap.ArenaAllocator.init(alloc);
+        var arena_alloc = arena.allocator();
+
+        var available = try arena_alloc.alloc(u8, 26);
+        var avail_stream = std.io.fixedBufferStream(&available);
+        var avail_writer = avail_stream.writer();
+        print("Which letters are still available? ", .{});
+        try stdin.streamUntilDelimiter(&avail_writer, '\n', 26);
+
+        var known = [_]?u8{null} ** 5;
+        for (0..5) |i| known[i] = try Self.askLetter(i);
+
+        var banned: [5][]const u8 = undefined;
+        for (0..5) |i| {
+            var buf = arena_alloc.alloc(u8, 26);
+            var buf_stream = std.io.fixedBufferStream(&buf);
+            var buf_writer = buf_stream.writer();
+            print("Which letters are banned in position {d}? ", .{i + 1});
+            try stdin.streamUntilDelimiter(&buf_writer, '\n', 26);
+            banned[i] = buf[0..try buf_stream.getEndPos()];
+        }
+
+        var forced: [26]u8 = undefined;
+        var f_len: usize = 0;
+        for (known) |letter| f_len += addForced(&forced, f_len, letter);
+        for (banned) |letter| f_len += addForced(&forced, f_len, letter);
+
+        return .{
+            .arena = arena,
+            .available = available[0..try avail_stream.getEndPos()],
+            .known = known,
+            .banned = banned,
+            .forced = forced[0..f_len],
+            .tried = [1]u5{0} ** 5,
+        };
+    }
+
+    fn addForced(forced: *[26]u8, len: usize, letter: ?u8) usize {
+        const l = letter orelse return 0;
+        if (len > 0) for (forced[0..len]) |f| if (f == l) return 0;
+        forced[len] = l;
+        return 1;
+    }
+
+    pub fn deinit(self: *Self) void {
+        self.arena.deinit();
+    }
+
+    fn askLetter(index: usize) !?u8 {
+        var buf = [1]?u8{null};
+
+        print("Type letter in position {d} if known, else hit enter: ", .{index + 1});
+        var writer = std.io.fixedBufferStream(&buf).writer();
+        try stdin.streamUntilDelimiter(&writer, '\n', 1);
+
+        return buf[0];
+    }
+};
+
 pub fn main() !void {
     var buf: [27]u8 = undefined;
     const available = try askInput("Which letters are still available? ", &buf) orelse unreachable;
