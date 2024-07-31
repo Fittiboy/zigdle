@@ -1,6 +1,7 @@
 const std = @import("std");
 const stdin = std.io.getStdIn().reader();
 const print = std.debug.print;
+const toUpper = std.ascii.toUpper;
 
 const WordleError = error{NoAvailableLetters};
 
@@ -43,7 +44,8 @@ const Words = struct {
         const avail_writer = avail_stream.writer();
         print("Which letters are still available? ", .{});
         try stdin.streamUntilDelimiter(avail_writer, '\n', 27);
-        const avail_slice = available[0..avail_stream.pos];
+        var avail_slice = available[0..avail_stream.pos];
+        for (avail_slice, 0..) |c, i| avail_slice[i] = toUpper(c);
 
         var known = [_]?u8{null} ** 5;
         for (0..5) |i| known[i] = try Self.askLetter(i);
@@ -55,6 +57,7 @@ const Words = struct {
             const buf_writer = buf_stream.writer();
             print("Which letters are banned in position {d}? ", .{i + 1});
             try stdin.streamUntilDelimiter(buf_writer, '\n', 27);
+            for (buf[0..buf_stream.pos], 0..) |c, p| buf[p] = toUpper(c);
             banned[i] = buf[0..buf_stream.pos];
         }
 
@@ -91,7 +94,7 @@ const Words = struct {
         const writer = stream.writer();
         try stdin.streamUntilDelimiter(writer, '\n', 2);
 
-        return if (buf[0] == ' ') null else buf[0];
+        return if (buf[0] == ' ') null else toUpper(buf[0]);
     }
 
     fn setUp(self: *Self) !void {
