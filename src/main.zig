@@ -45,7 +45,7 @@ const Words = struct {
         print("Which letters are still available? ", .{});
         try stdin.streamUntilDelimiter(avail_writer, '\n', 27);
         var avail_slice = available[0..avail_stream.pos];
-        for (avail_slice, 0..) |c, i| avail_slice[i] = toUpper(c);
+        for (avail_slice, 0..) |c, p| avail_slice[p] = toUpper(c);
 
         var known = [_]?u8{null} ** 5;
         for (0..5) |i| known[i] = try Self.askLetter(i);
@@ -57,8 +57,9 @@ const Words = struct {
             const buf_writer = buf_stream.writer();
             print("Which letters are banned in position {d}? ", .{i + 1});
             try stdin.streamUntilDelimiter(buf_writer, '\n', 27);
-            for (buf[0..buf_stream.pos], 0..) |c, p| buf[p] = toUpper(c);
-            banned[i] = buf[0..buf_stream.pos];
+            var banned_slice = buf[0..buf_stream.pos];
+            for (banned_slice, 0..) |c, p| banned_slice[p] = toUpper(c);
+            banned[i] = banned_slice;
         }
 
         const asc = std.sort.asc(u8);
@@ -183,7 +184,7 @@ const Words = struct {
 };
 
 pub fn main() !void {
-    var buf: [26 * 7]u8 = undefined;
+    var buf: [26 * 7 + 5]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(&buf);
     const allocator = fba.allocator();
     var words = Words.init(allocator) catch {
@@ -195,8 +196,8 @@ pub fn main() !void {
     };
     defer words.deinit();
 
-    while (words.next() catch {
-        print("No words match these rules! Did you type everything correctly?\n", .{});
+    while (words.next() catch |e| {
+        print("No words match these rules! Did you type everything correctly?\nError: {any}\n", .{e});
         return;
     }) |word| print("{s}\n", .{word});
 }
