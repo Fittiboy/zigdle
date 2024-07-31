@@ -40,7 +40,6 @@ const Words = struct {
         var alloc = arena.allocator();
 
         var available = try alloc.alloc(u8, 26);
-        errdefer alloc.free(available);
         var avail_stream = std.io.fixedBufferStream(available[0..]);
         const avail_writer = avail_stream.writer();
         print("Which letters are still available? ", .{});
@@ -54,7 +53,6 @@ const Words = struct {
         var banned: [5][]const u8 = undefined;
         for (0..5) |i| {
             var buf = try alloc.alloc(u8, 26);
-            errdefer alloc.free(buf);
             var buf_stream = std.io.fixedBufferStream(buf[0..]);
             const buf_writer = buf_stream.writer();
             print("Which letters are banned in position {d}? ", .{i + 1});
@@ -103,7 +101,6 @@ const Words = struct {
     fn setUp(self: *Self) !void {
         var allocator = self.arena.allocator();
         var forced = try allocator.alloc(u8, 5);
-        errdefer allocator.free(forced);
         var f_len: usize = 0;
         for (self.known) |letter| f_len += addForced(forced, f_len, letter);
         for (self.banned) |letters| {
