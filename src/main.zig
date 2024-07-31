@@ -43,6 +43,7 @@ const Words = struct {
         const avail_writer = avail_stream.writer();
         print("Which letters are still available? ", .{});
         try stdin.streamUntilDelimiter(avail_writer, '\n', 27);
+        const avail_slice = available[0..avail_stream.pos];
 
         var known = [_]?u8{null} ** 5;
         for (0..5) |i| known[i] = try Self.askLetter(i);
@@ -57,10 +58,12 @@ const Words = struct {
             banned[i] = buf[0..buf_stream.pos];
         }
 
-        std.mem.sort(u8, available[0..avail_stream.pos], {}, std.sort.asc(u8));
+        const asc = std.sort.asc(u8);
+        std.mem.sort(u8, avail_slice, {}, asc);
+
         return .{
             .arena = arena,
-            .available = available[0..avail_stream.pos],
+            .available = avail_slice,
             .known = known,
             .banned = banned,
         };
