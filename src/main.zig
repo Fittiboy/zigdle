@@ -57,6 +57,7 @@ const Words = struct {
             banned[i] = buf[0..buf_stream.pos];
         }
 
+        std.mem.sort(u8, available[0..avail_stream.pos], {}, std.sort.asc(u8));
         return .{
             .arena = arena,
             .available = available[0..avail_stream.pos],
